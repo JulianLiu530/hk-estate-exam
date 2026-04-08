@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>香港地產代理 E牌考試</title>
+  <link rel="stylesheet" href="css/style.css?v=4" />
+</head>
+<body>
+  <div id="app">
+    <header class="app-header">
+      <div class="header-title">🏠 E牌備考</div>
+      <div id="header-stats" class="header-stats"></div>
+    </header>
+
+    <main id="main-content" class="main-content"></main>
+
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-page="home">
+        <div class="nav-icon">🏠</div>
+        <div class="nav-label">首頁</div>
+      </div>
+      <div class="nav-item" data-page="practice">
+        <div class="nav-icon">📚</div>
+        <div class="nav-label">練習</div>
+      </div>
+      <div class="nav-item" data-page="exam">
+        <div class="nav-icon">📝</div>
+        <div class="nav-label">考試</div>
+      </div>
+      <div class="nav-item" data-page="wrong">
+        <div class="nav-icon">❌</div>
+        <div class="nav-label">錯題</div>
+      </div>
+      <div class="nav-item" data-page="stats">
+        <div class="nav-icon">📊</div>
+        <div class="nav-label">統計</div>
+      </div>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/storage.js?v=4"></script>
+  <script src="js/practice.js?v=4"></script>
+  <script src="js/exam.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
+</body>
+</html>
