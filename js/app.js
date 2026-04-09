@@ -5,6 +5,7 @@ const App = {
   currentPage: 'home',
   questionsData: null,
   casesData: null,
+  examsData: null,
   loaded: false,
 };
 
@@ -13,12 +14,14 @@ const App = {
 async function loadData() {
   if (App.loaded) return;
   try {
-    const [qRes, cRes] = await Promise.all([
+    const [qRes, cRes, eRes] = await Promise.all([
       fetch('data/questions.json'),
       fetch('data/cases.json'),
+      fetch('data/exams.json'),
     ]);
     App.questionsData = await qRes.json();
     App.casesData = await cRes.json();
+    App.examsData = await eRes.json();
     App.loaded = true;
   } catch (e) {
     console.error('Failed to load data:', e);
@@ -59,6 +62,7 @@ function renderPage(page, params = {}) {
     case 'chapter-practice': div.innerHTML = renderChapterPractice(params); break;
     case 'exam-session':     div.innerHTML = renderExamSession(params); break;
     case 'exam-result':      div.innerHTML = renderExamResult(params); break;
+    case 'exam-select':      div.innerHTML = renderExamSelect(); break;
     default: div.innerHTML = renderHome();
   }
 
@@ -198,21 +202,36 @@ function renderExamStart() {
     </div>
   ` : '';
 
+  const examItems = App.examsData ? App.examsData.map(e => `
+    <div class="chapter-item exam-select-item" data-exam-id="${e.exam_id}" style="cursor:pointer">
+      <div class="chapter-num" style="background:var(--primary);color:#fff;font-size:0.7rem;padding:4px 6px;border-radius:6px;min-width:36px;text-align:center">📝</div>
+      <div class="chapter-info">
+        <div class="chapter-title">${e.title}</div>
+        <div class="chapter-meta">第一部分 30題 · 第二部分 20題 · 共50題</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+  `).join('') : '';
+
   return `
     <div class="card">
       <div style="text-align:center;padding:16px 0 10px">
         <div style="font-size:2.5rem;margin-bottom:10px">📝</div>
         <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:6px">E牌模擬考試</div>
         <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.7">
-          第一部分：30題（單選 + 判斷）<br>
-          第二部分：3個案例，共20題<br>
-          合格分數：70分（70%）<br>
+          第一部分：30題單選題，答對18題或以上合格<br>
+          第二部分：2個案例，共20題，答對12題或以上合格<br>
+          兩部分須同時合格（各60%）<br>
           考試時間：90分鐘
         </div>
       </div>
       <div class="divider"></div>
-      <button class="btn btn-primary" style="width:100%" id="start-exam-btn">開始考試</button>
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:8px" id="start-random-exam-btn">🔀 隨機模擬考試</button>
     </div>
+
+    <div class="section-label" style="margin-top:18px">選擇真題套卷</div>
+    ${examItems}
+
     ${historyHtml}
   `;
 }
@@ -355,11 +374,19 @@ function bindPageEvents(page, params) {
     });
   });
 
-  // Exam start
-  const startBtn = document.getElementById('start-exam-btn');
-  if (startBtn) startBtn.addEventListener('click', () => {
+  // Exam start - random
+  const startRandomBtn = document.getElementById('start-random-exam-btn');
+  if (startRandomBtn) startRandomBtn.addEventListener('click', () => {
     const questions = buildExamQuestions();
     navigate('exam-session', { questions, startTime: Date.now() });
+  });
+
+  // Exam select - specific paper
+  document.querySelectorAll('.exam-select-item[data-exam-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const questions = buildExamQuestions(el.dataset.examId);
+      navigate('exam-session', { questions, startTime: Date.now() });
+    });
   });
 
   // Wrong book actions
@@ -409,14 +436,28 @@ function bindPageEvents(page, params) {
 
 // ── Build Exam Questions ───────────────────────────────────────────────────
 
-function buildExamQuestions() {
+function buildExamQuestions(examId) {
+  // Use a specific exam set if examId provided
+  if (examId && App.examsData) {
+    const exam = App.examsData.find(e => e.exam_id === examId);
+    if (exam) {
+      return { regular: exam.regular, cases: exam.cases, title: exam.title };
+    }
+  }
+  // Random: pick from all exams data if available
+  if (App.examsData && App.examsData.length > 0) {
+    const allRegular = App.examsData.flatMap(e => e.regular);
+    const shuffled = allRegular.sort(() => Math.random() - 0.5).slice(0, 30);
+    // Pick a random exam's cases
+    const randomExam = App.examsData[Math.floor(Math.random() * App.examsData.length)];
+    return { regular: shuffled, cases: randomExam.cases, title: '隨機模擬考試' };
+  }
+  // Fallback to old questions.json + cases.json
   const allQ = [];
   App.questionsData.chapters.forEach(ch => {
     ch.questions.forEach(q => allQ.push({ ...q, chapterId: ch.id, chapterTitle: ch.title }));
   });
-  // Shuffle and pick 30
   const shuffled = allQ.sort(() => Math.random() - 0.5).slice(0, 30);
-  // Add 3 case studies
   const cases = App.casesData.cases.map(c => ({ ...c, isCase: true }));
   return { regular: shuffled, cases };
 }

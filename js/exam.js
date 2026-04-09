@@ -13,7 +13,8 @@ function renderExamSession(params) {
   });
   const allQ = [...regular, ...allCaseQ];
   const total = allQ.length;
-  const PASS_SCORE = Math.ceil(total * 0.7);
+  const PART1_COUNT = regular.length; // 30
+  const PART2_COUNT = allCaseQ.length; // 20 (set after allCaseQ is built)
   const DURATION = 90 * 60; // 90 minutes in seconds
 
   let idx = 0;
@@ -46,8 +47,8 @@ function renderExamSession(params) {
            <button class="tf-btn ${userAns === 'false' ? 'selected' : ''}" data-val="false">✗ 錯誤</button>
          </div>`
       : `<div class="options-list">
-           ${q.options.map((opt, i) => {
-             const val = 'ABCD'[i];
+           ${q.options.map((opt) => {
+             const val = opt[0];
              return `<button class="option-btn ${userAns === val ? 'selected' : ''}" data-val="${val}">${opt}</button>`;
            }).join('')}
          </div>`;
@@ -115,13 +116,14 @@ function renderExamSession(params) {
     submitted = true;
     clearInterval(timerInterval);
 
-    let correct = 0;
+    let part1Correct = 0, part2Correct = 0;
     const wrongItems = [];
-    allQ.forEach(q => {
+    allQ.forEach((q, i) => {
       const userAns = answers[q.id];
       const isCorrect = userAns && String(userAns).toLowerCase() === String(q.answer).toLowerCase();
-      if (isCorrect) correct++;
-      else {
+      if (isCorrect) {
+        if (i < PART1_COUNT) part1Correct++; else part2Correct++;
+      } else {
         wrongItems.push({ q, userAns });
         if (userAns) {
           Storage.addWrong(q.id, q, q.chapterId || 'exam', q.chapterTitle || '模擬考試', userAns);
@@ -129,13 +131,14 @@ function renderExamSession(params) {
       }
     });
 
+    const correct = part1Correct + part2Correct;
+    const passed = part1Correct >= 18 && part2Correct >= 12;
     const score = Math.round(correct / total * 100);
-    const passed = correct >= PASS_SCORE;
     Storage.saveExamResult({ score: correct, total, passed, pct: score });
     Storage.touchStreak();
     updateHeaderStats();
 
-    navigate('exam-result', { correct, total, score, passed, wrongItems, allQ, answers });
+    navigate('exam-result', { correct, total, score, passed, wrongItems, allQ, answers, part1Correct, part2Correct, part1Total: PART1_COUNT, part2Total: PART2_COUNT });
   }
 
   function renderExam(container) {
@@ -238,7 +241,10 @@ function renderExamSession(params) {
 // ── Exam Result ────────────────────────────────────────────────────────────
 
 function renderExamResult(params) {
-  const { correct, total, score, passed, wrongItems, allQ, answers } = params;
+  const { correct, total, score, passed, wrongItems, allQ, answers,
+          part1Correct = 0, part2Correct = 0, part1Total = 30, part2Total = 20 } = params;
+  const part1Pass = part1Correct >= 18;
+  const part2Pass = part2Correct >= 12;
 
   const wrongHTML = wrongItems.slice(0, 10).map(({ q, userAns }) => `
     <div style="padding:12px 0;border-bottom:1px solid var(--border)">
@@ -254,26 +260,18 @@ function renderExamResult(params) {
         <div style="font-size:2.5rem;margin-bottom:8px">${passed ? '🎉' : '📖'}</div>
         <div style="font-size:2.5rem;font-weight:900;color:${passed?'var(--success)':'var(--error)'};line-height:1">${correct}</div>
         <div style="font-size:1rem;color:var(--text-muted);margin-bottom:4px">/ ${total} 題正確</div>
-        <div style="font-size:1.3rem;font-weight:700;color:${passed?'var(--success)':'var(--error)'};margin-bottom:6px">${score}%</div>
-        <div class="tag ${passed?'green':'red'}" style="font-size:0.9rem;padding:4px 16px">${passed ? '✓ 合格' : '✗ 不合格'}</div>
-        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px">及格線：70%（${Math.ceil(total*0.7)} 題）</div>
+        <div class="tag ${passed?'green':'red'}" style="font-size:0.9rem;padding:4px 16px;margin-bottom:8px;display:inline-block">${passed ? '✓ 合格' : '✗ 不合格'}</div>
       </div>
-      <div class="result-breakdown">
-        <div class="breakdown-item">
-          <div class="breakdown-num">${correct}</div>
-          <div class="breakdown-label">答對</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1;background:${part1Pass?'#e8f8ef':'#fdecea'};border-radius:8px;padding:12px;text-align:center;border:1.5px solid ${part1Pass?'var(--success)':'var(--error)'}">
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">第一部分（單選題）</div>
+          <div style="font-size:1.4rem;font-weight:800;color:${part1Pass?'var(--success)':'var(--error)'}">${part1Correct}/${part1Total}</div>
+          <div style="font-size:0.72rem;margin-top:4px;color:${part1Pass?'var(--success)':'var(--error)'}">${part1Pass?'✓ 合格':'✗ 不合格'}（需≥18）</div>
         </div>
-        <div class="breakdown-item">
-          <div class="breakdown-num">${total - correct}</div>
-          <div class="breakdown-label">答錯</div>
-        </div>
-        <div class="breakdown-item">
-          <div class="breakdown-num">${Object.keys(answers).length}</div>
-          <div class="breakdown-label">已作答</div>
-        </div>
-        <div class="breakdown-item">
-          <div class="breakdown-num">${total - Object.keys(answers).length}</div>
-          <div class="breakdown-label">未作答</div>
+        <div style="flex:1;background:${part2Pass?'#e8f8ef':'#fdecea'};border-radius:8px;padding:12px;text-align:center;border:1.5px solid ${part2Pass?'var(--success)':'var(--error)'}">
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">第二部分（案例題）</div>
+          <div style="font-size:1.4rem;font-weight:800;color:${part2Pass?'var(--success)':'var(--error)'}">${part2Correct}/${part2Total}</div>
+          <div style="font-size:0.72rem;margin-top:4px;color:${part2Pass?'var(--success)':'var(--error)'}">${part2Pass?'✓ 合格':'✗ 不合格'}（需≥12）</div>
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:4px">
