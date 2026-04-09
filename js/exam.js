@@ -1,5 +1,69 @@
 // exam.js — 模擬考試邏輯（計時、判分、案例題）
 
+// ── Case Passage Formatter ──────────────────────────────────────────────────
+
+function formatCasePassage(passage) {
+  // Detect 土地查冊 by key section header
+  if (/物\s*業\s*資\s*料/.test(passage)) {
+    return formatLandSearch(passage);
+  }
+  return formatCaseAnalysis(passage);
+}
+
+function formatLandSearch(text) {
+  // Section headers to split on (spaced Chinese + English)
+  const sections = [
+    { re: /物\s*業\s*資\s*料\s*PROPERTY PARTICULARS/, label: '物業資料 Property Particulars' },
+    { re: /業\s*主\s*資\s*料\s*OWNER PARTICULARS?/, label: '業主資料 Owner Particulars' },
+    { re: /物\s*業\s*涉\s*及\s*的\s*轇\s*輵\s*INCUMBRANCES?/, label: '物業涉及的轇輵 Incumbrances' },
+    { re: /等\s*待\s*註\s*冊\s*的\s*契\s*約\s*DEEDS?\s*PENDING\s*REGI/, label: '等待註冊的契約 Deeds Pending Registration' },
+  ];
+
+  // Find split points
+  const splits = [];
+  for (const s of sections) {
+    const m = s.re.exec(text);
+    if (m) splits.push({ idx: m.index, label: s.label, end: m.index + m[0].length });
+  }
+  splits.sort((a, b) => a.idx - b.idx);
+
+  if (splits.length === 0) return `<p style="white-space:pre-line">${text}</p>`;
+
+  let html = '';
+  // Text before first section
+  const preamble = text.slice(0, splits[0].idx).trim();
+  if (preamble) html += `<p style="margin-bottom:8px;font-size:0.82rem">${preamble}</p>`;
+
+  for (let i = 0; i < splits.length; i++) {
+    const content = text.slice(splits[i].end, splits[i + 1] ? splits[i + 1].idx : undefined).trim();
+    // Format REMARKS line
+    const formatted = content
+      .replace(/(備註\s*REMARKS\s*:)/g, '<br><span style="font-weight:700">$1</span>')
+      .replace(/VIEW\s+\w[\w\s]+/g, ''); // strip navigation artifacts
+    html += `
+      <div style="margin-bottom:10px">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid var(--border)">${splits[i].label}</div>
+        <div style="font-size:0.82rem;line-height:1.7">${formatted}</div>
+      </div>`;
+  }
+  return html;
+}
+
+function formatCaseAnalysis(text) {
+  // Split into paragraphs at sentence-ending punctuation followed by whitespace + Chinese char
+  // Also split at double spaces which often indicate paragraph breaks in PDF extraction
+  const paras = text
+    .split(/(?<=[。！？」])\s{1,4}(?=[^\s「])/u)
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (paras.length <= 1) {
+    // Fallback: split on 2+ spaces
+    return text.split(/\s{2,}/).map(p => `<p style="margin-bottom:8px">${p.trim()}</p>`).join('');
+  }
+  return paras.map(p => `<p style="margin-bottom:8px">${p}</p>`).join('');
+}
+
 // ── Exam Session ───────────────────────────────────────────────────────────
 
 function renderExamSession(params) {
@@ -38,7 +102,7 @@ function renderExamSession(params) {
     const passageHTML = isCase ? `
       <div class="case-passage">
         <div class="case-title">📋 ${q.caseTitle}</div>
-        ${q.casePassage}
+        ${formatCasePassage(q.casePassage)}
       </div>` : '';
 
     const optionsHTML = isTF
