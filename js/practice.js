@@ -1,29 +1,91 @@
-// ===== practice.js — 章節練習邏輯 =====
+// practice.js — 章節練習頁面邏輯（獨立頁面版）
 
-// ── Chapter Practice Entry ──────────────────────────────────────────────────
+// ── 頁面初始化 ───────────────────────────────────────────────────────────
+async function initPracticePage() {
+  Storage.touchStreak();
+  await loadData();
+  updateHeaderStats();
 
-function renderChapterPractice(params) {
+  // 檢查是否從錯題本跳來的「只練錯題」模式
+  const isWrongPractice = sessionStorage.getItem('wrongPractice') === '1';
+  if (isWrongPractice) {
+    sessionStorage.removeItem('wrongPractice');
+    const list = Storage.getWrongList(false);
+    if (list.length === 0) {
+      showToast('沒有錯題');
+      renderChapterList();
+    } else {
+      startPractice({ questions: list, title: '錯題練習', isWrongPractice: true });
+    }
+    return;
+  }
+
+  renderChapterList();
+}
+
+// ── 章節列表 ─────────────────────────────────────────────────────────────
+function renderChapterList() {
+  if (!App.questionsData) {
+    document.getElementById('main-content').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⏳</div><p>載入中…</p></div>';
+    return;
+  }
+  const chapters = App.questionsData.chapters;
+  const items = chapters.map((ch, i) => {
+    const prog  = Storage.getChapterProgress(ch.id);
+    const total = ch.questions.length;
+    const done  = prog.total || 0;
+    const pct   = total > 0 ? Math.min(100, Math.round(done / total * 100)) : 0;
+    return `
+      <div class="chapter-item" data-chapter="${ch.id}">
+        <div class="chapter-num">${i + 1}</div>
+        <div class="chapter-info">
+          <div class="chapter-title">${ch.title.replace(/^第.+?：/, '')}</div>
+          <div class="chapter-meta">${total} 題 · 已答 ${done} 題</div>
+          <div class="chapter-progress-bar">
+            <div class="chapter-progress-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-muted);min-width:36px;text-align:right">${pct}%</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="section-label">選擇章節</div>
+    ${items}
+  `;
+
+  document.querySelectorAll('.chapter-item[data-chapter]').forEach(el => {
+    el.addEventListener('click', () => {
+      const ch = App.questionsData.chapters.find(c => c.id === el.dataset.chapter);
+      if (ch) startPractice({ chapter: ch });
+    });
+  });
+}
+
+// ── 開始練習 ─────────────────────────────────────────────────────────────
+function startPractice(params) {
   const { chapter, questions: wrongQuestions, title, isWrongPractice } = params;
 
   let questions, chapterId, chapterTitle;
-
   if (isWrongPractice) {
-    questions = wrongQuestions;
-    chapterId = 'wrong';
+    questions    = wrongQuestions;
+    chapterId    = 'wrong';
     chapterTitle = title || '錯題練習';
   } else {
-    questions = chapter.questions.map(q => ({ ...q, chapterId: chapter.id, chapterTitle: chapter.title }));
-    chapterId = chapter.id;
+    questions    = chapter.questions.map(q => ({ ...q, chapterId: chapter.id, chapterTitle: chapter.title }));
+    chapterId    = chapter.id;
     chapterTitle = chapter.title;
   }
 
   if (!questions || questions.length === 0) {
-    return `<div class="empty-state"><div class="empty-icon">📭</div><p>沒有題目</p></div>`;
+    showToast('沒有題目');
+    renderChapterList();
+    return;
   }
 
-  // Preserve mode if already set, default to 'test'
   const prevMode = App.practiceState ? App.practiceState.mode : 'test';
-
   App.practiceState = {
     questions,
     chapterId,
@@ -31,26 +93,23 @@ function renderChapterPractice(params) {
     current: 0,
     answered: {},
     isWrongPractice,
-    mode: prevMode, // 'test' | 'study'
+    mode: prevMode,
   };
 
-  return renderPracticeQuestion();
+  renderQuestion();
 }
 
-// ── Render Question ─────────────────────────────────────────────────────────
-
-function renderPracticeQuestion() {
+// ── 渲染題目 ─────────────────────────────────────────────────────────────
+function renderQuestion() {
   const ps = App.practiceState;
   const { questions, current, answered, mode } = ps;
   const q = questions[current];
   const total = questions.length;
   const progressPct = Math.round((current / total) * 100);
 
-  const isStudy = mode === 'study';
+  const isStudy    = mode === 'study';
   const isAnswered = answered[current] !== undefined;
-  const userAns = answered[current];
-
-  // In study mode, always show answer; in test mode, show after answering
+  const userAns    = answered[current];
   const showAnswer = isStudy || isAnswered;
 
   const questionHtml = q.type === 'truefalse'
@@ -81,32 +140,32 @@ function renderPracticeQuestion() {
     </div>
   `;
 
-  return `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <button class="btn btn-secondary btn-sm" id="back-to-list">← 返回</button>
-      <div style="font-size:0.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ps.chapterTitle.replace(/^第.章：/, '')}</div>
-    </div>
-
-    ${modeToggle}
-
-    <div class="exam-progress" style="margin-bottom:8px">
-      <div class="exam-progress-fill" style="width:${progressPct}%"></div>
-    </div>
-
-    <div class="card" id="question-card">
-      <div class="question-header">
-        <div class="question-counter">第 ${current + 1} / ${total} 題</div>
-        <div class="question-type-badge ${q.type === 'truefalse' ? 'tf' : ''}">
-          ${q.type === 'truefalse' ? '判斷題' : '單選題'}
-        </div>
+  document.getElementById('main-content').innerHTML = `
+    <div class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="btn btn-secondary btn-sm" id="back-to-list">← 返回</button>
+        <div style="font-size:0.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ps.chapterTitle.replace(/^第.+?：/, '')}</div>
       </div>
-      <div class="question-text">${q.question}</div>
-      ${questionHtml}
-      ${explanationHtml}
+      ${modeToggle}
+      <div class="exam-progress" style="margin-bottom:8px">
+        <div class="exam-progress-fill" style="width:${progressPct}%"></div>
+      </div>
+      <div class="card" id="question-card">
+        <div class="question-header">
+          <div class="question-counter">第 ${current + 1} / ${total} 題</div>
+          <div class="question-type-badge ${q.type === 'truefalse' ? 'tf' : ''}">
+            ${q.type === 'truefalse' ? '判斷題' : '單選題'}
+          </div>
+        </div>
+        <div class="question-text">${q.question}</div>
+        ${questionHtml}
+        ${explanationHtml}
+      </div>
+      ${navHtml}
     </div>
-
-    ${navHtml}
   `;
+
+  bindPracticeEvents();
 }
 
 function renderSingleQuestion(q, showAnswer, userAns, isStudy) {
@@ -119,47 +178,52 @@ function renderSingleQuestion(q, showAnswer, userAns, isStudy) {
           if (letter === q.answer) cls = 'correct';
           else if (!isStudy && letter === userAns) cls = 'wrong';
         }
-        return `<button class="option-btn ${cls}" data-ans="${letter}" ${showAnswer && !isStudy ? 'disabled' : ''}>${opt}</button>`;
+        return `<button class="option-btn ${cls}" data-ans="${letter}" ${showAnswer ? 'disabled' : ''}>${opt}</button>`;
       }).join('')}
     </div>
   `;
 }
 
 function renderTFQuestion(q, showAnswer, userAns, isStudy) {
-  const trueClass = showAnswer ? (q.answer === 'true' ? 'correct' : (!isStudy && userAns === 'true' ? 'wrong' : '')) : '';
+  const trueClass  = showAnswer ? (q.answer === 'true'  ? 'correct' : (!isStudy && userAns === 'true'  ? 'wrong' : '')) : '';
   const falseClass = showAnswer ? (q.answer === 'false' ? 'correct' : (!isStudy && userAns === 'false' ? 'wrong' : '')) : '';
   return `
     <div class="tf-row">
-      <button class="tf-btn ${trueClass}" data-ans="true" ${showAnswer && !isStudy ? 'disabled' : ''}>✓ 正確</button>
-      <button class="tf-btn ${falseClass}" data-ans="false" ${showAnswer && !isStudy ? 'disabled' : ''}>✗ 錯誤</button>
+      <button class="tf-btn ${trueClass}"  data-ans="true"  ${showAnswer ? 'disabled' : ''}>✓ 正確</button>
+      <button class="tf-btn ${falseClass}" data-ans="false" ${showAnswer ? 'disabled' : ''}>✗ 錯誤</button>
     </div>
   `;
 }
 
-// ── Bind Events ─────────────────────────────────────────────────────────────
-
+// ── 綁定事件 ─────────────────────────────────────────────────────────────
 function bindPracticeEvents() {
   const ps = App.practiceState;
   if (!ps) return;
 
-  document.getElementById('back-to-list')?.addEventListener('click', () =>
-    navigate(ps.isWrongPractice ? 'wrong' : 'practice'));
+  document.getElementById('back-to-list')?.addEventListener('click', () => {
+    App.practiceState = null;
+    if (ps.isWrongPractice) {
+      window.location.href = 'wrong.html';
+    } else {
+      renderChapterList();
+    }
+  });
 
-  // Mode toggle
+  // 模式切換
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       ps.mode = btn.dataset.mode;
-      refreshPractice();
+      renderQuestion();
     });
   });
 
-  // Answer buttons (test mode only)
+  // 答題按鈕（測試模式）
   if (ps.mode === 'test') {
     document.querySelectorAll('.option-btn, .tf-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (ps.answered[ps.current] !== undefined) return;
         const ans = btn.dataset.ans;
-        const q = ps.questions[ps.current];
+        const q   = ps.questions[ps.current];
         const correct = ans === q.answer;
         ps.answered[ps.current] = ans;
 
@@ -170,24 +234,25 @@ function bindPracticeEvents() {
           Storage.addWrong(q.id || q.qid, q, q.chapterId || ps.chapterId, q.chapterTitle || ps.chapterTitle, ans);
         }
         Storage.touchStreak();
-
-        refreshPractice();
+        renderQuestion();
       });
     });
   }
 
-  // Prev / Next
+  // 上一題 / 下一題
   document.getElementById('prev-btn')?.addEventListener('click', () => {
-    if (ps.current > 0) { ps.current--; refreshPractice(); }
+    if (ps.current > 0) { ps.current--; renderQuestion(); }
   });
 
   document.getElementById('next-btn')?.addEventListener('click', () => {
     if (ps.current < ps.questions.length - 1) {
       ps.current++;
-      refreshPractice();
+      renderQuestion();
     } else {
       if (ps.mode === 'study') {
-        navigate(ps.isWrongPractice ? 'wrong' : 'practice');
+        App.practiceState = null;
+        if (ps.isWrongPractice) window.location.href = 'wrong.html';
+        else renderChapterList();
       } else {
         showPracticeComplete();
       }
@@ -195,25 +260,14 @@ function bindPracticeEvents() {
   });
 }
 
-function refreshPractice() {
-  const main = document.getElementById('main-content');
-  const div = main.querySelector('.page');
-  div.innerHTML = renderPracticeQuestion();
-  bindPracticeEvents();
-  window.scrollTo(0, 0);
-}
-
-// ── Practice Complete ───────────────────────────────────────────────────────
-
+// ── 練習完成 ─────────────────────────────────────────────────────────────
 function showPracticeComplete() {
-  const ps = App.practiceState;
-  const total = ps.questions.length;
+  const ps      = App.practiceState;
+  const total   = ps.questions.length;
   const correct = Object.entries(ps.answered).filter(([i, ans]) => ans === ps.questions[+i].answer).length;
-  const pct = Math.round(correct / total * 100);
+  const pct     = Math.round(correct / total * 100);
 
-  const main = document.getElementById('main-content');
-  const div = main.querySelector('.page');
-  div.innerHTML = `
+  document.getElementById('main-content').innerHTML = `
     <div class="card" style="text-align:center;padding:32px 20px">
       <div style="font-size:2.5rem;margin-bottom:12px">${pct >= 70 ? '🎉' : '📖'}</div>
       <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:6px">練習完成！</div>
@@ -227,9 +281,17 @@ function showPracticeComplete() {
   `;
 
   document.getElementById('retry-btn').addEventListener('click', () => {
-    ps.current = 0;
+    ps.current  = 0;
     ps.answered = {};
-    refreshPractice();
+    renderQuestion();
   });
-  document.getElementById('back-list-btn').addEventListener('click', () => navigate('practice'));
+  document.getElementById('back-list-btn').addEventListener('click', () => {
+    App.practiceState = null;
+    renderChapterList();
+  });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  initBottomNav();
+  initPracticePage();
+});

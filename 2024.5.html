@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <title>土地查册结果生成</title>
+    <style>
+        body {
+            font-family: "Times New Roman", "MingLiU", serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .page-container {
+            width: 800px;
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-section h1 {
+            font-size: 20pt;
+            text-decoration: underline;
+            margin-bottom: 5px;
+        }
+        .header-section h2 {
+            font-size: 16pt;
+            margin-top: 0;
+        }
+        .appendix {
+            float: right;
+            font-weight: bold;
+            font-size: 14pt;
+        }
+        .index-links {
+            font-size: 10pt;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .registry-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .info-block {
+            font-size: 9pt;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+        .section-title {
+            text-align: center;
+            border-bottom: 2px solid black;
+            border-top: 2px solid black;
+            padding: 5px 0;
+            margin: 20px 0;
+        }
+        .section-title h3 {
+            margin: 0;
+            font-size: 12pt;
+            text-decoration: underline;
+        }
+        .data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        .data-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .label-col {
+            width: 45%;
+        }
+        .value-col {
+            width: 55%;
+        }
+        .table-data {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .table-data th {
+            border-bottom: 1px solid black;
+            padding: 5px;
+            text-align: center;
+            vertical-align: bottom;
+        }
+        .table-data td {
+            padding: 8px 5px;
+            text-align: center;
+            vertical-align: top;
+        }
+        .remark-row td {
+            text-align: left;
+            padding-left: 20%;
+            font-style: italic;
+        }
+        .page-footer-copyright {
+            text-align: center;
+            font-size: 8.5pt;
+            color: #555;
+            margin-top: 18px;
+            padding-top: 8px;
+            border-top: 1px solid #ccc;
+        }
+        #wm {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        #wm span {
+            position: absolute;
+            font-size: 48px;
+            font-weight: bold;
+            color: rgba(160, 160, 160, 0.22);
+            transform: rotate(-35deg);
+            white-space: nowrap;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div id="wm"></div>
+
+    <div class="appendix">附件</div>
+    <div class="header-section">
+        <h1>第二部分</h1>
+        <h2>土地查册</h2>
+    </div>
+
+    <div class="index-links">
+        VIEW PROPERTY PARTICULARS<br>
+        VIEW OWNER PARTICULARS<br>
+        VIEW INCUMBRANCES<br>
+        VIEW DEEDS PENDING REGISTRATION
+    </div>
+
+    <div class="registry-title">
+        土地註冊處 THE LAND REGISTRY<br>
+        土地登記冊 LAND REGISTER
+    </div>
+
+    <div class="info-block">
+        印發於 PRINTED AT: INTERNET SEARCH<br>
+        查冊日期及時間 SEARCH DATE AND TIME: 20/02/2024 15:54<br>
+        查冊者姓名 NAME OF SEARCHER: TRN ESTATE AGENCY<br><br>
+        查冊種類 SEARCH TYPE: HISTORICAL AND CURRENT
+    </div>
+
+    <div class="info-block" style="font-size: 8pt;">
+        本登記冊列明有關物業截至 20/02/2024 11:32 之資料<br>
+        THE INFORMATION SET OUT BELOW CONTAINS PARTICULARS OF THE PROPERTY UP TO 11:32 ON 20/02/2024.<br><br>
+        備存土地紀錄以供市民查閱旨在防止秘密及有欺詐成份的物業交易，以及提供容易追溯和確定土地財產及不動產權益的方法。土地紀錄內的資料不得用於與土地紀錄的宗旨無關之目的，使用所提供的資料須符合《個人資料(私隱)條例》的規定。
+    </div>
+
+    <div class="section-title">
+        <h3>物業資料<br>PROPERTY PARTICULARS</h3>
+    </div>
+
+    <div class="data-grid">
+        <div class="data-row">
+            <div class="label-col">
+                物業參考編號<br>PROPERTY REFERENCE NUMBER (PRN): B2349870
+            </div>
+            <div class="value-col">
+                批約 HELD UNDER: GOVERNMENT LEASE
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="label-col">
+                地段編號<br>LOT NO: HUNG HOM INLAND LOT NO. 367
+            </div>
+            <div class="value-col">
+                年期 LEASE TERM: 75 YEARS
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="label-col">
+                所佔地段份數<br>SHARE OF THE LOT: 1/273
+            </div>
+            <div class="value-col">
+                開始日期 COMMENCEMENT OF LEASE TERM: 07/08/1959
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="label-col">
+                ADDRESS: FLAT B, 8/FLOOR<br>HANG SUM BUILDING<br>NO.72 HANG SUM ROAD<br>HUNG HOM KOWLOON
+            </div>
+            <div class="value-col">
+                每年地稅 RENT PER ANNUM: -<br><br>
+                地址：九龍紅磡<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;恆安道72號<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;恆安大廈8樓B室
+            </div>
+        </div>
+        <div class="data-row" style="margin-top: 10px;">
+            备注 REMARKS: THE RENT IS $24,560 P.A. (HHIL 367)
+        </div>
+    </div>
+
+    <div class="section-title">
+        <h3>業主資料<br>OWNER PARTICULARS</h3>
+    </div>
+
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th>業主姓名<br>NAME OF OWNER</th>
+                <th>身分(如非唯一擁有人)<br>CAPACITY<br>(IF NOT SOLE OWNER)</th>
+                <th>註冊摘要編號<br>MEMORIAL NO.</th>
+                <th>文書日期<br>DATE OF<br>INSTRUMENT</th>
+                <th>註冊日期<br>DATE OF REGISTRATION</th>
+                <th>代價<br>CONSIDERATION</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>FIREY PROPERTY LIMITED</td>
+                <td>-</td>
+                <td>UB1026193</td>
+                <td>25/09/1973</td>
+                <td>03/10/1973</td>
+                <td>-</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: GOVERNMENT LEASE OF HHIL 367</td>
+            </tr>
+            <tr>
+                <td>WONG CHUN</td>
+                <td>-</td>
+                <td>UB1267825</td>
+                <td>18/05/1976</td>
+                <td>26/05/1976</td>
+                <td>$111,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT WITH PLAN</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-footer-copyright">版權為快樂小狼所有，禁止翻印。</div>
+
+    <table class="table-data" style="margin-top: 0;">
+        <tbody>
+            <tr>
+                <td width="16%">LEE WAI</td>
+                <td width="16%">-</td>
+                <td width="16%">UB1658338</td>
+                <td width="16%">10/04/1979</td>
+                <td width="16%">24/04/1979</td>
+                <td width="20%">$330,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+            <tr>
+                <td>CHAN CHI SHING</td>
+                <td>-</td>
+                <td>UB2771345</td>
+                <td>15/04/1985</td>
+                <td>25/04/1985</td>
+                <td>$760,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+            <tr>
+                <td>WONG CHI YIN<br>LEUNG SUK YEE</td>
+                <td>JOINT TENANT<br>JOINT TENANT</td>
+                <td>UB4036125</td>
+                <td>06/01/1989</td>
+                <td>16/01/1989</td>
+                <td>$660,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+            <tr>
+                <td>WONG CHI YIN<br>MIX LIMITED</td>
+                <td>JOINT TENANT<br>JOINT TENANT</td>
+                <td>UB4167856</td>
+                <td>08/10/1989</td>
+                <td>18/10/1989</td>
+                <td>$2,560,000.00</td>
+            </tr>
+            <tr>
+                <td>MIX LIMITED</td>
+                <td>-</td>
+                <td>UB7048252</td>
+                <td>02/03/1997</td>
+                <td>12/03/1997</td>
+                <td>$3,400,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+            <tr>
+                <td>LAU TAI MING</td>
+                <td>-</td>
+                <td>16101601330246</td>
+                <td>06/10/2016</td>
+                <td>16/10/2016</td>
+                <td>$4,300,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+            <tr>
+                <td>YEUNG TZE HUNG<br>楊子雄</td>
+                <td>-</td>
+                <td>19042801380135</td>
+                <td>18/04/2019</td>
+                <td>28/04/2019</td>
+                <td>$5,600,000.00</td>
+            </tr>
+            <tr class="remark-row">
+                <td colspan="6">備註 REMARKS: ASSIGNMENT</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <h3>物業涉及的羈絆<br>INCUMBRANCES</h3>
+    </div>
+
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th width="15%">註冊摘要編號<br>MEMORIAL NO.</th>
+                <th width="15%">文書日期<br>DATE OF<br>INSTRUMENT</th>
+                <th width="15%">註冊日期<br>DATE OF REGISTRATION</th>
+                <th width="25%">文書性質<br>NATURE</th>
+                <th width="20%">受惠各方<br>IN FAVOUR OF</th>
+                <th width="10%">代價<br>CONSIDERATION</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>UB1258560</td>
+                <td>08/03/1976</td>
+                <td>22/03/1976</td>
+                <td>OCCUPATION PERMIT NO. H33/76</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>UB1263221</td>
+                <td>05/04/1976</td>
+                <td>26/04/1976</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE WITH PLAN<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. UB1267825</span></td>
+                <td>WONG CHUN</td>
+                <td>$111,000.00</td>
+            </tr>
+            <tr>
+                <td>UB1263588</td>
+                <td>18/04/1976</td>
+                <td>28/04/1976</td>
+                <td>DEED OF MUTUAL COVENANT</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>UB1267826</td>
+                <td>18/05/1976</td>
+                <td>26/05/1976</td>
+                <td>LEGAL CHARGE</td>
+                <td>TAI FU BANK</td>
+                <td>ALL MONEYS</td>
+            </tr>
+            <tr>
+                <td>UB1658337</td>
+                <td>10/04/1979</td>
+                <td>24/04/1979</td>
+                <td>REASSIGNMENT</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>UB1651068</td>
+                <td>15/01/1979</td>
+                <td>25/01/1979</td>
+                <td>GOVERNMENT NOTICE NO. 270<br>OF 1979 PURSUANT TO<br>SEC. 22 (2)<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: THE CROWN RENT AND PREMIUM (APPORTIONMENT) ORDINANCE</span></td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>UB1654206</td>
+                <td>10/03/1979</td>
+                <td>24/03/1979</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. UB1658338</span></td>
+                <td>LEE WAI</td>
+                <td>$330,000.00</td>
+            </tr>
+            <tr>
+                <td>UB2761266</td>
+                <td>15/03/1985</td>
+                <td>25/03/1985</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. UB2771345</span></td>
+                <td>CHAN CHI SHING</td>
+                <td>$760,000.00</td>
+            </tr>
+            <tr>
+                <td>UB4034945</td>
+                <td>06/02/1989</td>
+                <td>20/02/1989</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. UB4036125</span></td>
+                <td>WONG CHI YIN<br>(JOINT TENANT)<br>LEUNG SUK YEE<br>(JOINT TENANT)</td>
+                <td>$660,000.00</td>
+            </tr>
+            <tr>
+                <td>UB6593366</td>
+                <td>04/03/1996</td>
+                <td>15/03/1996</td>
+                <td>DEED OF RELEASE BY FIREY<br>PROPERTY LIMITED</td>
+                <td>THE INCORPORATION<br>OWNERS OF HANG<br>SUM BUILDING</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-footer-copyright">版權為快樂小狼所有，禁止翻印。</div>
+
+    <table class="table-data" style="margin-top: 0;">
+        <tbody>
+            <tr>
+                <td width="15%">UB6531296</td>
+                <td width="15%">09/11/1996</td>
+                <td width="15%">20/11/1996</td>
+                <td width="25%">MORTGAGE</td>
+                <td width="20%">SUN SHINE BANK<br>LIMITED</td>
+                <td width="10%">ALL MONIES</td>
+            </tr>
+            <tr>
+                <td>UB7048251</td>
+                <td>02/03/1997</td>
+                <td>12/03/1997</td>
+                <td>RELEASE</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>UB7035355</td>
+                <td>02/02/1997</td>
+                <td>12/02/1997</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. UB7048252</span></td>
+                <td>MIX LIMITED</td>
+                <td>$3,400,000.00</td>
+            </tr>
+            <tr>
+                <td>UB7048253</td>
+                <td>02/03/1997</td>
+                <td>12/03/1997</td>
+                <td>MORTGAGE</td>
+                <td>POWER BANK LIMITED</td>
+                <td>ALL MONIES</td>
+            </tr>
+            <tr>
+                <td>10060901680151</td>
+                <td>02/06/2010</td>
+                <td>09/06/2010</td>
+                <td>RECEIPT ON DISCHARGE OF A<br>CHARGE</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>10060901680152</td>
+                <td>02/06/2010</td>
+                <td>09/06/2010</td>
+                <td>MORTGAGE</td>
+                <td>GREAT BANK LIMITED</td>
+                <td>ALL MONIES</td>
+            </tr>
+            <tr>
+                <td>16101601330245</td>
+                <td>06/10/2016</td>
+                <td>16/10/2016</td>
+                <td>RECEIPT ON DISCHARGE OF A<br>CHARGE</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>15052801780235</td>
+                <td>05/05/2015</td>
+                <td>28/05/2015</td>
+                <td>ORDER NO. C3345/K/15 UNDER SEC.<br>24(1) OF THE BUILDINGS<br>ORDINANCE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: BY THE BUILDING AUTHORITY</span></td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>16091002560134</td>
+                <td>06/09/2016</td>
+                <td>10/09/2016</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO. 16101601330246</span></td>
+                <td>LAU TAI MING</td>
+                <td>$4,300,000.00</td>
+            </tr>
+            <tr>
+                <td>16101601330247</td>
+                <td>06/10/2016</td>
+                <td>16/10/2016</td>
+                <td>MORTGAGE</td>
+                <td>WING SHING BANK<br>LIMITED</td>
+                <td>ALL MONIES</td>
+            </tr>
+            <tr>
+                <td>19042801380134</td>
+                <td>18/04/2019</td>
+                <td>28/04/2019</td>
+                <td>DISCHARGE</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>16101601330248</td>
+                <td>06/10/2016</td>
+                <td>16/10/2016</td>
+                <td>RENTAL ASSIGNMENT</td>
+                <td>WING SHING BANK<br>LIMITED</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>19042801380134</td>
+                <td>18/04/2019</td>
+                <td>28/04/2019</td>
+                <td>DISCHARGE</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <td>19032502230152</td>
+                <td>18/03/2019</td>
+                <td>25/03/2019</td>
+                <td>AGREEMENT FOR SALE AND<br>PURCHASE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: SEE MEM. NO.</span></td>
+                <td>YEUNG TZE HUNG<br>楊子雄</td>
+                <td>$5,600,000.00</td>
+            </tr>
+            <tr>
+                <td>19042801380136</td>
+                <td>18/04/2019</td>
+                <td>28/04/2019</td>
+                <td>MORTGAGE</td>
+                <td>TIGER BANK LIMITED</td>
+                <td>ALL MONIES</td>
+            </tr>
+            <tr>
+                <td>19082902580369</td>
+                <td>13/08/2019</td>
+                <td>29/08/2019</td>
+                <td>SUPERSEDING ORDER NO.<br>C3345/K/15 UNDER SEC. 24(1) OF<br>THE BUILDING ORDINANCE<br><span style="font-size: 8pt; font-style: italic;">備註 REMARKS: BY THE BUILDING AUTHORITY</span></td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">
+        <h3 style="text-decoration: none; font-weight: bold;">等待註冊的契約<br>DEEDS PENDING REGISTRATION</h3>
+    </div>
+
+    <table class="table-data">
+        <thead>
+            <tr>
+                <th width="15%">註冊摘要編號<br>MEMORIAL NO.</th>
+                <th width="15%">文書日期<br>DATE OF<br>INSTRUMENT</th>
+                <th width="15%">交付日期<br>DATE OF<br>DELIVERY</th>
+                <th width="25%">文書性質<br>NATURE</th>
+                <th width="20%">受惠各方<br>IN FAVOUR OF</th>
+                <th width="10%">代價<br>CONSIDERATION</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="6" style="padding: 20px 0; font-weight: bold;">*****無 NIL *****</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="text-align: center; font-size: 9pt; margin: 30px 0;">
+        ******************************************* 登記冊末端 END OF REGISTER *******************************************
+    </div>
+
+    <div class="page-footer-copyright">版權為快樂小狼所有，禁止翻印。</div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var wm = document.getElementById('wm');
+    var container = document.querySelector('.page-container');
+    var text = '快樂小狼';
+    var h = container.scrollHeight;
+    var w = container.offsetWidth;
+    wm.style.height = h + 'px';
+    for (var y = -60; y < h + 60; y += 180) {
+        for (var x = -200; x < w + 200; x += 260) {
+            var s = document.createElement('span');
+            s.textContent = text;
+            s.style.top = y + 'px';
+            s.style.left = x + 'px';
+            wm.appendChild(s);
+        }
+    }
+});
+            wm.appendChild(s);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

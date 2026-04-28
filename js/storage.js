@@ -17,6 +17,7 @@ function getWrongBook() {
 
 function saveWrongBook(book) {
   localStorage.setItem(KEYS.WRONG, JSON.stringify(book));
+  if (window.SupabaseAuth) SupabaseAuth.scheduleSync();
 }
 
 /**
@@ -29,7 +30,6 @@ function saveWrongBook(book) {
  */
 function addWrong(qid, q, chapterId, chapterTitle, userAnswer) {
   const book = getWrongBook();
-  if (book[qid] && book[qid].mastered) return; // already mastered, skip
   book[qid] = {
     qid,
     question: q.question,
@@ -78,6 +78,7 @@ function getProgress() {
 
 function saveProgress(prog) {
   localStorage.setItem(KEYS.PROGRESS, JSON.stringify(prog));
+  if (window.SupabaseAuth) SupabaseAuth.scheduleSync();
 }
 
 /**
@@ -90,13 +91,13 @@ function recordAttempt(chapterId, qid, correct) {
   const prog = getProgress();
   if (!prog[chapterId]) prog[chapterId] = { attempted: {}, correct: 0, total: 0 };
   const ch = prog[chapterId];
-  const wasCorrect = ch.attempted[qid];
+  const wasCorrect = ch.attempted[qid]; // undefined | true | false
   ch.attempted[qid] = correct;
   // Recalculate correct count
   ch.correct = Object.values(ch.attempted).filter(Boolean).length;
   ch.total = Object.keys(ch.attempted).length;
   saveProgress(prog);
-  updateTotalStats(correct, wasCorrect === undefined);
+  updateTotalStats(correct, wasCorrect);
 }
 
 function getChapterProgress(chapterId) {
@@ -111,10 +112,20 @@ function getTotalStats() {
   catch { return { answered: 0, correct: 0 }; }
 }
 
-function updateTotalStats(correct, isNew) {
+function updateTotalStats(correct, wasCorrect) {
   const stats = getTotalStats();
-  if (isNew) stats.answered++;
-  if (correct) stats.correct++;
+  if (wasCorrect === undefined) {
+    // First attempt at this question
+    stats.answered++;
+    if (correct) stats.correct++;
+  } else {
+    // Re-answer: adjust correct count by delta only
+    if (correct && !wasCorrect) stats.correct++;
+    else if (!correct && wasCorrect) stats.correct--;
+  }
+  // Guard against data corruption
+  if (stats.correct > stats.answered) stats.correct = stats.answered;
+  if (stats.correct < 0) stats.correct = 0;
   localStorage.setItem(KEYS.TOTAL, JSON.stringify(stats));
 }
 
@@ -143,6 +154,7 @@ function saveExamResult(result) {
     history.unshift({ ...result, date: Date.now() });
     if (history.length > 20) history.length = 20;
     localStorage.setItem(KEYS.EXAM_HISTORY, JSON.stringify(history));
+    if (window.SupabaseAuth) SupabaseAuth.scheduleSync();
   } catch {}
 }
 

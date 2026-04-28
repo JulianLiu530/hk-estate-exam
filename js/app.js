@@ -62,7 +62,6 @@ function renderPage(page, params = {}) {
     case 'chapter-practice': div.innerHTML = renderChapterPractice(params); break;
     case 'exam-session':     div.innerHTML = renderExamSession(params); break;
     case 'exam-result':      div.innerHTML = renderExamResult(params); break;
-    case 'exam-select':      div.innerHTML = renderExamSelect(); break;
     default: div.innerHTML = renderHome();
   }
 
@@ -429,6 +428,15 @@ function bindPageEvents(page, params) {
   if (page === 'exam-result') {
     document.querySelector('#home-btn')?.addEventListener('click', () => navigate('home'));
     document.querySelector('#retry-exam-btn')?.addEventListener('click', () => navigate('exam'));
+    document.querySelectorAll('.toggle-exp-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.idx;
+        const body = document.querySelector(`.exp-body[data-idx="${idx}"]`);
+        const open = body.style.display !== 'none';
+        body.style.display = open ? 'none' : 'block';
+        btn.textContent = open ? '▶ 查看解析' : '▼ 收起解析';
+      });
+    });
   }
 
   updateHeaderStats();
