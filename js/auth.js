@@ -58,6 +58,12 @@ function renderAuthPage(onSuccess) {
             <div style="font-size:2rem;margin-bottom:8px">📝</div>
             <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:4px">注冊</div>
             <div style="font-size:0.8rem;color:var(--text-muted)">需要邀請碼才能注冊</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px">
+              獲取邀請碼請聯絡
+              微信：18826576878 或
+              <a href="https://wa.me/84950925" target="_blank"
+                style="color:var(--accent);text-decoration:none;font-weight:600">WhatsApp：84950925</a>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
             <input id="auth-email" type="email" placeholder="電郵地址" autocomplete="email"
