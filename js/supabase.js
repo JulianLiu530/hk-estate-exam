@@ -8,23 +8,32 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 
-const INVITE_CODE = '187003';
-
 /**
  * 注册（email + password + inviteCode）
  * 返回 { ok, msg }
+ *
+ * 流程：
+ *   1. 基本格式校验
+ *   2. 调用 RPC consume_invite_code —— 原子性核验并消耗邀请码
+ *   3. 邀请码有效 → 调用 Supabase signUp
+ *   4. signUp 失败 → 邀请码已被消耗（极低概率），提示重试
  */
 async function sbRegister(email, password, inviteCode) {
-  if (inviteCode !== INVITE_CODE) return { ok: false, msg: '邀請碼不正確' };
   if (!email || !email.includes('@')) return { ok: false, msg: '請輸入有效的電郵地址' };
   if (password.length < 6) return { ok: false, msg: '密碼至少6位' };
+  if (!inviteCode) return { ok: false, msg: '請輸入邀請碼' };
+
+  // 原子性消耗邀请码（RPC 在 DB 层加锁，防止同码并发注册）
+  const { data: consumed, error: rpcErr } = await _supabase
+    .rpc('consume_invite_code', { p_code: inviteCode.trim().toUpperCase(), p_email: email });
+  if (rpcErr) return { ok: false, msg: '伺服器錯誤，請稍後再試' };
+  if (!consumed) return { ok: false, msg: '邀請碼無效或已被使用' };
 
   const { data, error } = await _supabase.auth.signUp({ email, password });
   if (error) {
     if (error.message.includes('already registered')) return { ok: false, msg: '此電郵已被注冊' };
     return { ok: false, msg: error.message };
   }
-  // 自动登入（Supabase signUp 成功后会返回 session）
   return { ok: true, user: data.user };
 }
 
